@@ -1,0 +1,29 @@
+name: Windows regression
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: music-analysis
+          python-version: '3.12'
+          auto-activate-base: false
+      - run: conda run -n music-analysis python -m pip install -r requirements-dev.txt
+      - run: conda run -n music-analysis python -m ruff check .
+      - run: conda run -n music-analysis python -m pytest -q
+      - run: conda run -n music-analysis python main.py --smoke-test local/smoke
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-gui-evidence
+          path: local/smoke/
